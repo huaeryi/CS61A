@@ -45,14 +45,14 @@ def non_decrease_subseqs(s):
     """
     def subseq_helper(s, prev):
         if not s:
-            return ____________________
+            return [[]]
         elif s[0] < prev:
-            return ____________________
+            return subseq_helper(s[1:], prev) 
         else:
-            a = ______________________
-            b = ______________________
-            return insert_into_all(________, ______________) + ________________
-    return subseq_helper(____, ____)
+            a = subseq_helper(s[1:], s[0])
+            b = subseq_helper(s[1:], prev)
+            return insert_into_all(s[0], a) + b
+    return subseq_helper(s, 0)
 
 
 def num_trees(n):
@@ -76,6 +76,10 @@ def num_trees(n):
 
     """
     "*** YOUR CODE HERE ***"
+    if n == 1 or n == 2:
+        return 1
+    else:
+        return num_trees(n - 1) * 2 * (2 * n - 3) // n
 
 
 def merge(incr_a, incr_b):
@@ -98,7 +102,23 @@ def merge(incr_a, incr_b):
     iter_a, iter_b = iter(incr_a), iter(incr_b)
     next_a, next_b = next(iter_a, None), next(iter_b, None)
     "*** YOUR CODE HERE ***"
-
+    while next_a is not None or next_b is not None:
+        if next_a is None:
+            yield next_b
+            next_b = next(iter_b, None)
+        elif next_b is None:
+            yield next_a
+            next_a = next(iter_a, None)
+        else:
+            if next_a < next_b:
+                yield next_a
+                next_a = next(iter_a, None)
+            elif next_a == next_b:
+                yield next_a
+                next_a, next_b = next(iter_a, None), next(iter_b, None)
+            else:
+                yield next_b
+                next_b = next(iter_b, None)
 
 class Button:
     """
@@ -138,26 +158,25 @@ class Keyboard:
     """
 
     def __init__(self, *args):
-        ________________
-        for _________ in ________________:
-            ________________
+        self.buttons = []
+        for b in args:
+            self.buttons.append(b)
 
     def press(self, info):
         """Takes in a position of the button pressed, and
         returns that button's output"""
-        if ____________________:
-            ________________
-            ________________
-            ________________
-        ________________
+        if info < len(self.buttons):
+            self.buttons[info].times_pressed += 1
+            return self.buttons[info].key
+        return ''
 
     def typing(self, typing_input):
         """Takes in a list of positions of buttons pressed, and
         returns the total output"""
-        ________________
-        for ________ in ____________________:
-            ________________
-        ________________
+        res = ''
+        for b in typing_input:
+            res += self.press(b)
+        return res
 
 
 class Account:
@@ -188,24 +207,40 @@ class Account:
         self.balance = 0
         self.holder = account_holder
         "*** YOUR CODE HERE ***"
+        self.transactions = []
 
     def deposit(self, amount):
         """Increase the account balance by amount, add the deposit
         to the transaction history, and return the new balance.
         """
         "*** YOUR CODE HERE ***"
+        self.transactions.append(('deposit', amount))
+        self.balance += amount
+        return self.balance
 
     def withdraw(self, amount):
         """Decrease the account balance by amount, add the withdraw
         to the transaction history, and return the new balance.
         """
         "*** YOUR CODE HERE ***"
+        self.transactions.append(('withdraw', amount))
+        self.balance -= amount
+        return self.balance
 
     def __str__(self):
         "*** YOUR CODE HERE ***"
+        return f'{self.holder}\'s Balance: ${self.balance}'
 
     def __repr__(self):
         "*** YOUR CODE HERE ***"
+        num1 = 0
+        num2 = 0
+        for tmp in self.transactions:
+            if tmp[0] == 'deposit':
+                num1 += 1
+            elif tmp[0] == 'withdraw':
+                num2 += 1
+        return f'Accountholder: {self.holder}, Deposits: {num1}, Withdraws: {num2}'
 
 
 def trade(first, second):
@@ -237,9 +272,9 @@ def trade(first, second):
     """
     m, n = 1, 1
 
-    equal_prefix = lambda: ______________________
-    while _______________________________:
-        if __________________:
+    equal_prefix = lambda: sum(first[:m]) == sum(second[:n])
+    while not equal_prefix() and m < len(first) and n < len(second):
+        if sum(first[:m]) < sum(second[:n]):
             m += 1
         else:
             n += 1
@@ -277,11 +312,13 @@ def shuffle(cards):
     ['A♡', 'A♢', 'A♤', 'A♧', '2♡', '2♢', '2♤', '2♧', '3♡', '3♢', '3♤', '3♧']
     """
     assert len(cards) % 2 == 0, 'len(cards) must be even'
-    half = _______________
+    half = len(cards) // 2
     shuffled = []
-    for i in _____________:
-        _________________
-        _________________
+    for i in range(len(cards)):
+        if i % 2 == 0:
+            shuffled.append(cards[i // 2])
+        else:
+            shuffled.append(cards[half + i // 2])
     return shuffled
 
 
@@ -306,6 +343,16 @@ def insert(link, value, index):
     IndexError: Out of bounds!
     """
     "*** YOUR CODE HERE ***"
+    if index < 0:
+        raise IndexError('Out of bounds!')
+    if index == 0:
+        link.rest = Link(link.first, link.rest)
+        link.first = value
+    elif not link.rest:
+        raise IndexError('Out of bounds!')
+    else:
+        insert(link.rest, value, index - 1)
+
 
 
 def deep_len(lnk):
@@ -322,12 +369,13 @@ def deep_len(lnk):
     >>> deep_len(levels)
     5
     """
-    if ______________:
+    if lnk is Link.empty:
         return 0
-    elif ______________:
-        return 1
+    elif not isinstance(lnk.first, Link):
+        return deep_len(lnk.rest) + 1
     else:
-        return _________________________
+        return deep_len(lnk.rest) + deep_len(lnk.first)
+
 
 
 def make_to_string(front, mid, back, empty_repr):
@@ -346,10 +394,10 @@ def make_to_string(front, mid, back, empty_repr):
     '()'
     """
     def printer(lnk):
-        if ______________:
-            return _________________________
+        if lnk is Link.empty:
+            return empty_repr
         else:
-            return _________________________
+            return front + str(lnk.first) + mid + printer(lnk.rest) + back
     return printer
 
 
@@ -370,11 +418,11 @@ def prune_small(t, n):
     >>> t3
     Tree(6, [Tree(1), Tree(3, [Tree(1), Tree(2)])])
     """
-    while ___________________________:
-        largest = max(_______________, key=____________________)
-        _________________________
-    for __ in _____________:
-        ___________________
+    while len(t.branches) > n:
+        largest = max(t.branches, key=lambda x: x.label)
+        t.branches.remove(largest)
+    for b in t.branches:
+        prune_small(b, n)
 
 
 def long_paths(t, n):
@@ -428,6 +476,15 @@ def long_paths(t, n):
     [[0, 11, 12, 13, 14]]
     """
     "*** YOUR CODE HERE ***"
+    if t.is_leaf() and n > 0:
+        return []
+    elif t.is_leaf() and n <= 0:
+        return [[t.label]]
+    else:
+        ans = []
+        for b in t.branches:
+            ans += insert_into_all(t.label, long_paths(b, n - 1))
+        return ans
 
 
 class Link:
